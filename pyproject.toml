@@ -11,6 +11,8 @@ requires-python = ">=3.9"
 dependencies = [
     "pytest>=7.4",
     "openeo>=0.24.0",
+    "xarray>=2023.10.1",
+    "rioxarray>=0.15.0",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

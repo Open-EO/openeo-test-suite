@@ -60,6 +60,9 @@ def connection(backend_url: str, auto_authenticate: bool, capfd) -> openeo.Conne
             # - client credentials auth through env vars for automated/Jenkins CI runs
             #
             # See https://open-eo.github.io/openeo-python-client/auth.html#oidc-authentication-dynamic-method-selection
-            con.authenticate_oidc()
+            try: # TODO: probably there's a more elegant solution to have authenticate_basic as well?
+                con.authenticate_oidc()
+            except Exception as e:
+                con.authenticate_basic()
 
     return con
