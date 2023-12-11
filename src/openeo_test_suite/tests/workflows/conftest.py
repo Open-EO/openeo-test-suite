@@ -1,6 +1,8 @@
+import os
+
 import openeo
 import pytest
-import os
+
 
 @pytest.fixture
 def auto_authenticate() -> bool:
@@ -36,7 +38,9 @@ def temporal_interval_one_day(interval=["2019-06-03", "2019-06-05"]):
 
 
 @pytest.fixture
-def s2_stac_url(url="https://planetarycomputer.microsoft.com/api/stac/v1/collections/sentinel-2-l2a"):
+def s2_stac_url(
+    url="https://planetarycomputer.microsoft.com/api/stac/v1/collections/sentinel-2-l2a",
+):
     return url
 
 
