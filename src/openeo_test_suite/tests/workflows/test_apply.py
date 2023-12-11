@@ -3,12 +3,12 @@ from pathlib import Path
 import xarray as xr
 
 
-def test_load_apply_save_netcdf(
+def test_apply(
     connection, bounding_box_small, temporal_interval_one_day, s2_stac_url, tmp_path
 ):
     from openeo.processes import clip
 
-    filename = tmp_path / "test_load_apply_save_netcdf.nc"
+    filename = tmp_path / "test_apply.nc"
     cube = connection.load_stac(
         url=s2_stac_url,
         spatial_extent=bounding_box_small,
@@ -21,7 +21,7 @@ def test_load_apply_save_netcdf(
     assert (xr.open_dataarray(filename).max().item(0)) == 1
 
 
-def test_load_apply_dimension_save_netcdf(
+def test_apply_dimension(
     connection,
     bounding_box_small,
     temporal_interval_one_day,
@@ -29,7 +29,7 @@ def test_load_apply_dimension_save_netcdf(
     b_dim,
     tmp_path,
 ):
-    filename = tmp_path / "test_load_apply_dimension_save_netcdf.nc"
+    filename = tmp_path / "test_apply_dimension.nc"
     cube = connection.load_stac(
         url=s2_stac_url,
         spatial_extent=bounding_box_small,

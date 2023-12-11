@@ -19,6 +19,8 @@ def test_load_save_netcdf(
     assert len(xr.open_dataarray(filename).dims) == 4
 
 
+# The next test will fail if the back-end allows to store only 3D (x,y,bands) cubes to geoTIFF
+# In this test, only a single acquisition in time should be loaded
 def test_load_save_geotiff(
     connection, bounding_box_small, temporal_interval_one_day, s2_stac_url, tmp_path
 ):
