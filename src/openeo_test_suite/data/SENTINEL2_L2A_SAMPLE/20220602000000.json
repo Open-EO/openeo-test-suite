@@ -32,28 +32,7 @@
       ]
     ]
   },
-  "links": [
-    {
-      "rel": "collection",
-      "href": "https://stac.eurac.edu/collections/SENTINEL2_L2A_SAMPLE",
-      "type": "application/json"
-    },
-    {
-      "rel": "parent",
-      "href": "https://stac.eurac.edu/collections/SENTINEL2_L2A_SAMPLE",
-      "type": "application/json"
-    },
-    {
-      "rel": "self",
-      "href": "https://stac.eurac.edu/collections/SENTINEL2_L2A_SAMPLE/20220602000000",
-      "type": "application/json"
-    },
-    {
-      "rel": "root",
-      "href": "https://stac.eurac.edu",
-      "type": "application/json"
-    }
-  ],
+  "links": [],
   "assets": {
     "B04": {
       "href": "https://eurac-eo.s3-eu-west-1.amazonaws.com/SENTINEL2_L2A_SAMPLE/B04_20220602000000.tif",
