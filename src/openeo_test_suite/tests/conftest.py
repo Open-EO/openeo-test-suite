@@ -14,6 +14,24 @@ def pytest_addoption(parser):
         default=None,
         help="The openEO backend URL to connect to.",
     )
+    parser.addoption(
+        "--process-levels",
+        action="store",
+        default="",
+        help="The openEO process profiles you want to test against, e.g. 'L1,L2,L2A'. Mutually exclusive with --processes.",
+    )
+    parser.addoption(
+        "--processes",
+        action="store",
+        default="",
+        help="The openEO processes you want to test against, e.g. 'apply,reduce_dimension'. Mutually exclusive with --process-levels.",
+    )
+    parser.addoption(
+        "--runner",
+        action="store",
+        default=None,
+        help="A specific test runner to use for individual process tests. If not provided, uses a default HTTP API runner.",
+    )
 
 
 @pytest.fixture(scope="session")
@@ -27,11 +45,9 @@ def backend_url(request) -> str:
     elif "OPENEO_BACKEND_URL" in os.environ:
         url = os.environ["OPENEO_BACKEND_URL"]
     else:
-        raise RuntimeError(
-            "No openEO backend URL found. Specify it using the `--openeo-backend-url` command line option or through the 'OPENEO_BACKEND_URL' environment variable"
-        )
+        url = None
 
-    if "://" not in url:
+    if isinstance(url, str) and "://" not in url:
         url = f"https://{url}"
 
     _log.info(f"Using openEO back-end URL {url!r}")
@@ -50,19 +66,31 @@ def auto_authenticate() -> bool:
 
 @pytest.fixture
 def connection(backend_url: str, auto_authenticate: bool, capfd) -> openeo.Connection:
+    if not backend_url:
+        raise RuntimeError(
+            "No openEO backend URL found. Specify it using the `--openeo-backend-url` command line option or through the 'OPENEO_BACKEND_URL' environment variable"
+        )
+
     con = openeo.connect(backend_url, auto_validate=False)
 
     if auto_authenticate:
-        # Temporarily disable output capturing, to make sure that OIDC device code instructions (if any) are visible to the user.
-        with capfd.disabled():
-            # Note: this generic `authenticate_oidc()` call allows both:
-            # - device code/refresh token based authentication for manual test suite runs
-            # - client credentials auth through env vars for automated/Jenkins CI runs
-            #
-            # See https://open-eo.github.io/openeo-python-client/auth.html#oidc-authentication-dynamic-method-selection
-            try: # TODO: probably there's a more elegant solution to have authenticate_basic as well?
+        auth_method = os.environ.get("OPENEO_AUTH_METHOD")
+
+        if auth_method == "none":
+            pass
+        elif auth_method == "basic":
+            con.authenticate_basic(
+                username=os.environ.get("OPENEO_AUTH_BASIC_USERNAME"),
+                password=os.environ.get("OPENEO_AUTH_BASIC_PASSWORD"),
+            )
+        else:
+            # Temporarily disable output capturing, to make sure that OIDC device code instructions (if any) are visible to the user.
+            with capfd.disabled():
+                # Note: this generic `authenticate_oidc()` call allows both:
+                # - device code/refresh token based authentication for manual test suite runs
+                # - client credentials auth through env vars for automated/Jenkins CI runs
+                #
+                # See https://open-eo.github.io/openeo-python-client/auth.html#oidc-authentication-dynamic-method-selection
                 con.authenticate_oidc()
-            except Exception as e:
-                con.authenticate_basic()
 
     return con

@@ -1,0 +1,4 @@
+[submodule "assets/processes"]
+	path = assets/processes
+	url = https://github.com/Open-EO/openeo-processes
+	branch = add-tests

@@ -11,13 +11,22 @@ requires-python = ">=3.9"
 dependencies = [
     "pytest>=7.4",
     "openeo>=0.24.0",
-    "xarray>=2023.10.1",
     "rioxarray>=0.15.0",
+    "json-five>=1.1.1",
+    "xarray>=2023.11.0",
+    "numpy>=1.26.2",
+    "deepdiff>=6.7.1",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
+]
+
+[project.optional-dependencies]
+Dask = [
+    "openeo-pg-parser-networkx>=2023.11.0",
+    "openeo-processes-dask>=2023.11.6",
 ]
 
 [tool.pytest.ini_options]

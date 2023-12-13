@@ -65,7 +65,30 @@ or through an environment variable `OPENEO_BACKEND_URL`
 
 If no explicit protocol is specified, `https://` will be assumed automatically.
 
+## Authentication of the basic `connection` fixture
 
+The test suite provides a basic `connection` fixture
+(an `openeo.Connection` object as defined in the `openeo` Python library package)
+to interact with the backend.
+
+There are several ways to set up authentication for this connection fixture,
+building on the ["dynamic authentication method selection" feature of the `openeo` Python library package](https://open-eo.github.io/openeo-python-client/auth.html#oidc-authentication-dynamic-method-selection),
+which is driven by the `OPENEO_AUTH_METHOD` environment variable:
+
+- `OPENEO_AUTH_METHOD=none`: no authentication will be done
+- `OPENEO_AUTH_METHOD=basic`: basic authentication will be triggered.
+  Username and password can be specified through additional environment variables
+  `OPENEO_AUTH_BASIC_USERNAME`, and `OPENEO_AUTH_BASIC_PASSWORD`.
+  Alternatively, it is also possible to handle basic auth credentials through
+  the [auth configuration system and `openeo-auth` tool](https://open-eo.github.io/openeo-python-client/auth.html#auth-config-files-and-openeo-auth-helper-tool)
+  from the `openeo` Python library package.
+- `OPENEO_AUTH_METHOD=client_credentials`: OIDC with "client credentials" grant,
+  which [assumes some additional environment variables to set the client credentials](https://open-eo.github.io/openeo-python-client/auth.html#oidc-client-credentials-using-environment-variables).
+- If nothing is specified (the default), the default behavior of `connection.authenticate_oidc()` is followed:
+  - Valid OIDC refresh tokens will be used if available
+  - Otherwise, the OIDC device code flow is initiated.
+    Make sure to check the logging/output of the test suite run
+    for instructions on how to complete the authentication flow.
 
 ## Development and contributions
 
