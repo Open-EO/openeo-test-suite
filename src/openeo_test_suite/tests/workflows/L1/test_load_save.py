@@ -1,7 +1,10 @@
 import numpy as np
 import pytest
-import rioxarray
-import xarray as xr
+
+from openeo_test_suite.lib.workflows.io import (
+    load_geotiff_dataarray,
+    load_netcdf_dataarray,
+)
 
 LEVEL = "L1"
 
@@ -30,10 +33,8 @@ def test_load_save_netcdf(
     cube_red_nir.download(filename)
 
     assert filename.exists()
-    try:
-        data = xr.open_dataarray(filename)
-    except ValueError:
-        data = xr.open_dataset(filename, decode_coords="all").to_dataarray(dim=b_dim)
+    data = load_netcdf_dataarray(filename, band_dim_name=b_dim)
+
     assert len(data.dims) == 4
     assert b_dim in data.dims
     assert x_dim in data.dims
@@ -61,10 +62,8 @@ def test_load_save_10x10_netcdf(
     cube_red_10x10.download(filename)
 
     assert filename.exists()
-    try:
-        data = xr.open_dataarray(filename)
-    except ValueError:
-        data = xr.open_dataset(filename, decode_coords="all").to_dataarray(dim=b_dim)
+    data = load_netcdf_dataarray(filename, band_dim_name=b_dim)
+
     assert len(data.dims) == 4
     assert b_dim in data.dims
     assert x_dim in data.dims
@@ -91,7 +90,6 @@ def test_load_save_geotiff(geotiff_not_supported, cube_one_day_red, tmp_path):
     cube_one_day_red.download(filename)
 
     assert filename.exists()
-    assert (
-        len(rioxarray.open_rasterio(filename).dims) >= 3
-    )  # 2 spatial + 1 band + (maybe) 1 time
+    data = load_geotiff_dataarray(filename)
+    assert len(data.dims) >= 3  # 2 spatial + 1 band + (maybe) 1 time
     # TODO: check if the content matches the requested AOI! With VITO works with orginal CRS but not with lat/lon (as in this case)

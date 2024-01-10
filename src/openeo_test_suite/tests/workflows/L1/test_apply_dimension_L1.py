@@ -1,5 +1,6 @@
 import pytest
-import xarray as xr
+
+from openeo_test_suite.lib.workflows.io import load_netcdf_dataarray
 
 LEVEL = "L1"
 
@@ -32,10 +33,8 @@ def test_apply_dimension_quantiles_0(
 
     cube.download(filename)
     assert filename.exists()
-    try:
-        data = xr.open_dataarray(filename)
-    except ValueError:
-        data = xr.open_dataset(filename, decode_coords="all").to_dataarray(dim=b_dim)
+    data = load_netcdf_dataarray(filename, band_dim_name=b_dim)
+
     assert len(data[b_dim]) == 3
 
 
@@ -62,8 +61,6 @@ def test_apply_dimension_quantiles_1(
 
     cube.download(filename)
     assert filename.exists()
-    try:
-        data = xr.open_dataarray(filename)
-    except ValueError:
-        data = xr.open_dataset(filename, decode_coords="all").to_dataarray(dim=b_dim)
+    data = load_netcdf_dataarray(filename, band_dim_name=b_dim)
+
     assert len(data[b_dim]) == 3

@@ -1,5 +1,6 @@
 import pytest
-import xarray as xr
+
+from openeo_test_suite.lib.workflows.io import load_netcdf_dataarray
 
 LEVEL = "L3"
 
@@ -30,8 +31,5 @@ def test_reduce_time_merge(
     cube_merged.download(filename)
 
     assert filename.exists()
-    try:
-        data = xr.open_dataarray(filename)
-    except ValueError:
-        data = xr.open_dataset(filename, decode_coords="all").to_dataarray(dim=b_dim)
+    data = load_netcdf_dataarray(filename, band_dim_name=b_dim)
     assert len(data.dims) == 3  # 2 spatial + 1 band
