@@ -48,14 +48,6 @@ def pytest_addoption(parser):
 
 
 @pytest.fixture(scope="session")
-def backend_url(request) -> str:
-    """
-    Fixture to get the desired openEO back-end URL to test against.
-    """
-    return get_backend_url(request.config)
-
-
-@pytest.fixture(scope="session")
 def skip_experimental(request) -> bool:
     """
     Fixture to determine whether experimental functionality should be tested or not.
@@ -121,14 +113,8 @@ def auto_authenticate() -> bool:
 
 
 @pytest.fixture(scope="module")
-def connection(
-    backend_url: str, auto_authenticate: bool, pytestconfig
-) -> openeo.Connection:
-    if not backend_url:
-        raise RuntimeError(
-            "No openEO backend URL found. Specify it using the `--openeo-backend-url` command line option or through the 'OPENEO_BACKEND_URL' environment variable"
-        )
-
+def connection(request, auto_authenticate: bool, pytestconfig) -> openeo.Connection:
+    backend_url = get_backend_url(request.config, required=True)
     con = openeo.connect(backend_url, auto_validate=False)
 
     if auto_authenticate:

@@ -4,6 +4,7 @@ import os
 import openeo
 import pytest
 
+from openeo_test_suite.lib.backend_under_test import get_backend_url
 from openeo_test_suite.lib.process_runner.base import ProcessTestRunner
 
 _log = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ def auto_authenticate() -> bool:
 
 @pytest.fixture(scope="module")
 def connection(
-    backend_url: str, runner: str, auto_authenticate: bool, pytestconfig
+    request, runner: str, auto_authenticate: bool, pytestconfig
 ) -> ProcessTestRunner:
     # TODO: avoid overriding existing "connection" fixture with a different kind of object (ProcessTestRunner)
     if runner == "dask":
@@ -52,6 +53,7 @@ def connection(
     else:
         from openeo_test_suite.lib.process_runner.http import Http
 
+        backend_url = get_backend_url(request.config, required=True)
         con = openeo.connect(backend_url)
         if auto_authenticate:
             # Temporarily disable output capturing, to make sure that OIDC device code instructions (if any) are visible to the user.
