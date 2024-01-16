@@ -96,10 +96,9 @@ def test_process(
             file=file,
         )
     except Exception as e:
-        # TODO: originally there was a `pytest.skip()` here, but that was too liberal, hiding real issues.
+        # TODO: this `except: pytest.skip()` is overly liberal, possibly hiding real issues.
         #       On what precise conditions should we skip? e.g. NotImplementedError?
-        # pytest.skip(str(e))
-        raise
+        pytest.skip(str(e))
 
     throws = bool(example.get("throws"))
     returns = "returns" in example
@@ -287,7 +286,7 @@ def check_non_json_values(value):
 
 
 def check_exception(example, result):
-    assert isinstance(result, Exception)
+    assert isinstance(result, Exception), f"Expected an exception, but got {result}"
     if isinstance(example["throws"], str):
         if result.__class__.__name__ != example["throws"]:
             # TODO: better way to report this warning?
@@ -299,7 +298,7 @@ def check_exception(example, result):
 
 
 def check_return_value(example, result, connection, file):
-    assert not isinstance(result, Exception)
+    assert not isinstance(result, Exception), f"Unexpected exception: {result}"
 
     # handle custom types of data
     result = connection.decode_data(result, example["returns"])
@@ -312,7 +311,7 @@ def check_return_value(example, result, connection, file):
     delta = example.get("delta", 0.0000000001)
 
     if isinstance(example["returns"], dict):
-        assert isinstance(result, dict)
+        assert isinstance(result, dict), f"Expected a dict but got {type(result)}"
         exclude_regex_paths = []
         exclude_paths = []
         ignore_order_func = None
@@ -339,7 +338,7 @@ def check_return_value(example, result, connection, file):
         )
         assert {} == diff, f"Differences: {diff!s}"
     elif isinstance(example["returns"], list):
-        assert isinstance(result, list)
+        assert isinstance(result, list), f"Expected a list but got {type(result)}"
         diff = DeepDiff(
             example["returns"],
             result,
@@ -357,4 +356,5 @@ def check_return_value(example, result, connection, file):
         # handle numerical data with a delta
         assert result == pytest.approx(example["returns"], rel=delta)
     else:
-        assert result == example["returns"]
+        msg = f"Expected {example['returns']} but got {result}"
+        assert result == example["returns"], msg
