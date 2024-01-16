@@ -40,6 +40,7 @@ def auto_authenticate() -> bool:
 def connection(
     backend_url: str, runner: str, auto_authenticate: bool, pytestconfig
 ) -> ProcessTestRunner:
+    # TODO: avoid overriding existing "connection" fixture with a different kind of object (ProcessTestRunner)
     if runner == "dask":
         from openeo_test_suite.lib.process_runner.dask import Dask
 

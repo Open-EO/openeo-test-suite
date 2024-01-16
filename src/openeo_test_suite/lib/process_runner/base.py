@@ -38,7 +38,7 @@ class ProcessTestRunner:
         to the internal backend representation openEO process tests.
         specification -> backend
         """
-        raise Exception("labeled arrays not implemented yet")
+        raise NotImplementedError("labeled arrays not implemented yet")
 
     def encode_datacube(self, data: Dict) -> Any:
         """
@@ -46,7 +46,7 @@ class ProcessTestRunner:
         internal backend representation openEO process tests.
         specification -> backend
         """
-        raise Exception("datacubes not implemented yet")
+        raise NotImplementedError("datacubes not implemented yet")
 
     def encode_data(self, data: Any) -> Any:
         """

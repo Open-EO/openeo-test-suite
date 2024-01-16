@@ -1,19 +1,29 @@
+# TODO rename this module (`test_example.py` was originally just meant as an example)
+
+import logging
 import math
-import warnings
-from pathlib import Path, posixpath
+from pathlib import Path
+from typing import List, Optional, Tuple, Union
 
 import json5
 import pytest
-import xarray as xr
 from deepdiff import DeepDiff
 
+import openeo_test_suite
+from openeo_test_suite.lib.process_runner.base import ProcessTestRunner
 from openeo_test_suite.lib.process_runner.util import isostr_to_datetime
 
-# glob path to the test files
-examples_path = "assets/processes/tests/*.json5"
+_log = logging.getLogger(__name__)
 
 
-def get_prop(prop, data, test, default=None):
+DEFAULT_EXAMPLES_ROOT = (
+    Path(openeo_test_suite.__file__).parents[2] / "assets/processes/tests"
+)
+
+
+def _get_prop(prop: str, data: dict, test: dict, *, default=None):
+    """Get property from example data, first trying test data, then full process data, then general fallback value."""
+    # TODO make this function more generic (e.g. `multidict_get(key, *dicts, default=None)`)
     if prop in test:
         level = test[prop]
     elif prop in data:
@@ -23,32 +33,37 @@ def get_prop(prop, data, test, default=None):
     return level
 
 
-def get_examples():
+def get_examples(
+    root: Union[str, Path] = DEFAULT_EXAMPLES_ROOT
+) -> List[Tuple[str, dict, Path, str, bool]]:
+    """Collect process examples/tests from examples root folder containing JSON5 files."""
+    # TODO return a list of NamedTuples?
     examples = []
-    package_root_folder = Path(__file__).parents[5]
-    files = package_root_folder.glob(examples_path)
-    for file in files:
-        id = file.stem
+    # TODO: it's not recommended use `file` (a built-in) as variable name. `path` would be better.
+    for file in root.glob("*.json5"):
+        process_id = file.stem
         try:
             with file.open() as f:
                 data = json5.load(f)
-                for test in data["tests"]:
-                    level = get_prop("level", data, test, "L4")
-                    experimental = get_prop("experimental", data, test, False)
-                    examples.append([id, test, file, level, experimental])
+            for test in data["tests"]:
+                level = _get_prop("level", data, test, default="L4")
+                experimental = _get_prop("experimental", data, test, default=False)
+                examples.append((process_id, test, file, level, experimental))
         except Exception as e:
-            warnings.warn("Failed to load {} due to {}".format(file, e))
+            _log.warning(f"Failed to load {file}: {e}")
 
     return examples
 
 
-@pytest.mark.parametrize("id,example,file,level, experimental", get_examples())
+@pytest.mark.parametrize(
+    ["process_id", "example", "file", "level", "experimental"], get_examples()
+)
 def test_process(
     connection,
     skip_experimental,
     process_levels,
     processes,
-    id,
+    process_id,
     example,
     file,
     level,
@@ -56,16 +71,16 @@ def test_process(
     skipper,
 ):
     if skip_experimental and experimental:
-        pytest.skip("Skipping experimental process {}".format(id))
+        pytest.skip(f"Skipping experimental process {process_id}")
 
     skipper.skip_if_unmatching_process_level(level)
-    if id not in processes:
+    if process_id not in processes:
         pytest.skip(
-            "Skipping process {id!r} because it is not in the specified processes"
+            f"Skipping process {process_id!r} because it is not in the specified processes"
         )
 
     # check whether the process is available
-    skipper.skip_if_unsupported_process([id])
+    skipper.skip_if_unsupported_process([process_id])
 
     # check whether any additionally required processes are available
     if "required" in example:
@@ -74,22 +89,30 @@ def test_process(
     # prepare the arguments from test JSON encoding to internal backend representations
     # or skip if not supported by the test runner
     try:
-        arguments = prepare_arguments(example["arguments"], id, connection, file)
+        arguments = _prepare_arguments(
+            arguments=example["arguments"],
+            process_id=process_id,
+            connection=connection,
+            file=file,
+        )
     except Exception as e:
-        # TODO: skipping on a generic `Exception` is very liberal and might hide real issues
-        pytest.skip(str(e))
+        # TODO: originally there was a `pytest.skip()` here, but that was too liberal, hiding real issues.
+        #       On what precise conditions should we skip? e.g. NotImplementedError?
+        # pytest.skip(str(e))
+        raise
 
-    throws = bool(example["throws"]) if "throws" in example else False
+    throws = bool(example.get("throws"))
     returns = "returns" in example
 
     # execute the process
     try:
-        result = connection.execute(id, arguments)
+        result = connection.execute(process_id, arguments)
     except Exception as e:
         result = e
 
     # check the process results / behavior
     if throws and returns:
+        # TODO what does it mean if test can both throw and return?
         if isinstance(result, Exception):
             check_exception(example, result)
         else:
@@ -102,25 +125,31 @@ def test_process(
         # TODO: skipping at this point of test is a bit useless.
         #       Instead: skip earlier, or just consider the test as passed?
         pytest.skip(
-            "Test for process {} doesn't provide an expected result for arguments: {}".format(
-                id, example["arguments"]
-            )
+            f"Test for process {process_id} doesn't provide an expected result for arguments: {example['arguments']}"
         )
 
 
-def prepare_arguments(arguments, process_id, connection, file):
-    for name in arguments:
-        arguments[name] = prepare_argument(
-            arguments[name], process_id, name, connection, file
+def _prepare_arguments(
+    arguments: dict, process_id: str, connection: ProcessTestRunner, file: Path
+) -> dict:
+    return {
+        k: _prepare_argument(
+            arg=v, process_id=process_id, name=k, connection=connection, file=file
         )
+        for k, v in arguments.items()
+    }
 
-    return arguments
 
-
-def prepare_argument(arg, process_id, name, connection, file):
+def _prepare_argument(
+    arg: Union[dict, str, int, float],
+    process_id: str,
+    name: str,
+    connection: ProcessTestRunner,
+    file: Path,
+):
     # handle external references to files
     if isinstance(arg, dict) and "$ref" in arg:
-        arg = load_ref(arg["$ref"], file)
+        arg = _load_ref(arg["$ref"], file)
 
     # handle custom types of data
     if isinstance(arg, dict):
@@ -134,17 +163,36 @@ def prepare_argument(arg, process_id, name, connection, file):
             # nodata-values
             elif arg["type"] == "nodata":
                 arg = connection.get_nodata_value()
+            else:
+                # TODO: raise NotImplementedError?
+                _log.warning(f"Unhandled argument type: {arg}")
         elif "process_graph" in arg:
-            arg = connection.encode_process_graph(arg, process_id, name)
+            arg = connection.encode_process_graph(
+                process=arg, parent_process_id=process_id, parent_parameter=name
+            )
         else:
-            for key in arg:
-                arg[key] = prepare_argument(
-                    arg[key], process_id, name, connection, file
+            arg = {
+                k: _prepare_argument(
+                    arg=v,
+                    process_id=process_id,
+                    name=name,
+                    connection=connection,
+                    file=file,
                 )
+                for k, v in arg.items()
+            }
 
     elif isinstance(arg, list):
-        for i in range(len(arg)):
-            arg[i] = prepare_argument(arg[i], process_id, name, connection, file)
+        arg = [
+            _prepare_argument(
+                arg=a,
+                process_id=process_id,
+                name=name,
+                connection=connection,
+                file=file,
+            )
+            for a in arg
+        ]
 
     arg = connection.encode_data(arg)
 
@@ -154,48 +202,60 @@ def prepare_argument(arg, process_id, name, connection, file):
     return arg
 
 
-def prepare_results(connection, file, example, result=None):
+def _prepare_results(connection: ProcessTestRunner, file: Path, example, result=None):
     # go through the example and result recursively and convert datetimes to iso strings
     # could be used for more conversions in the future...
 
     if isinstance(example, dict):
         # handle external references to files
         if isinstance(example, dict) and "$ref" in example:
-            example = load_ref(example["$ref"], file)
+            example = _load_ref(example["$ref"], file)
 
         if "type" in example:
             if example["type"] == "datetime":
                 example = isostr_to_datetime(example["value"])
                 try:
                     result = isostr_to_datetime(result)
-                except:
+                except Exception:
                     pass
             elif example["type"] == "nodata":
                 example = connection.get_nodata_value()
         else:
+            # TODO: avoid in-place dict mutation
             for key in example:
                 if key not in result:
-                    (example[key], _) = prepare_results(connection, file, example[key])
+                    (example[key], _) = _prepare_results(
+                        connection=connection, file=file, example=example[key]
+                    )
                 else:
-                    (example[key], result[key]) = prepare_results(
-                        connection, file, example[key], result[key]
+                    (example[key], result[key]) = _prepare_results(
+                        connection=connection,
+                        file=file,
+                        example=example[key],
+                        result=result[key],
                     )
 
     elif isinstance(example, list):
+        # TODO: avoid in-place list mutation
         for i in range(len(example)):
             if i >= len(result):
-                (example[i], _) = prepare_results(connection, file, example[i])
+                (example[i], _) = _prepare_results(
+                    connection=connection, file=file, example=example[i]
+                )
             else:
-                (example[i], result[i]) = prepare_results(
-                    connection, file, example[i], result[i]
+                (example[i], result[i]) = _prepare_results(
+                    connection=connection,
+                    file=file,
+                    example=example[i],
+                    result=result[i],
                 )
 
     return (example, result)
 
 
-def load_ref(ref, file):
+def _load_ref(ref: str, file: Path):
     try:
-        path = posixpath.join(file.parent, ref)
+        path = file.parent / ref
         if ref.endswith(".json") or ref.endswith(".json5") or ref.endswith(".geojson"):
             with open(path) as f:
                 return json5.load(f)
@@ -203,61 +263,56 @@ def load_ref(ref, file):
             with open(path) as f:
                 return f.read()
         else:
-            raise Exception(
+            raise NotImplementedError(
                 "External references to files with the given extension not implemented yet."
             )
     except Exception as e:
-        raise Exception("Failed to load external reference {}: {}".format(ref, e))
+        # TODO: is this try-except actually useful?
+        raise Exception(f"Failed to load external reference {ref}") from e
 
 
 def check_non_json_values(value):
+    # TODO: shouldn't this check be an aspect of Http(ProcessTestRunner)?
     if isinstance(value, float):
         if math.isnan(value):
-            raise Exception("HTTP JSON APIs don't support NaN values")
+            raise ValueError("HTTP JSON APIs don't support NaN values")
         elif math.isinf(value):
-            raise Exception("HTTP JSON APIs don't support infinity values")
+            raise ValueError("HTTP JSON APIs don't support infinity values")
     elif isinstance(value, dict):
-        for key in value:
-            check_non_json_values(value[key])
+        for v in value.values():
+            check_non_json_values(v)
     elif isinstance(value, list):
         for item in value:
             check_non_json_values(item)
 
 
 def check_exception(example, result):
-    assert isinstance(result, Exception), "Excpected an exception, but got {}".format(
-        result
-    )
+    assert isinstance(result, Exception)
     if isinstance(example["throws"], str):
         if result.__class__.__name__ != example["throws"]:
-            warnings.warn(
-                "Expected exception {} but got {}".format(
-                    example["throws"], result.__class__.__name__
-                )
+            # TODO: better way to report this warning?
+            _log.warning(
+                f"Expected exception {example['throws']} but got {result.__class__}"
             )
         # todo: we should enable this end remove the two lines above, but right now tooling doesn't really implement this
         # assert result.__class__.__name__ == example["throws"]
 
 
 def check_return_value(example, result, connection, file):
-    assert not isinstance(result, Exception), "Unexpected exception: {} ".format(
-        str(result)
-    )
+    assert not isinstance(result, Exception)
 
     # handle custom types of data
     result = connection.decode_data(result, example["returns"])
 
     # decode special types (currently mostly datetimes and nodata)
-    (example["returns"], result) = prepare_results(
-        connection, file, example["returns"], result
+    (example["returns"], result) = _prepare_results(
+        connection=connection, file=file, example=example["returns"], result=result
     )
 
-    delta = example["delta"] if "delta" in example else 0.0000000001
+    delta = example.get("delta", 0.0000000001)
 
     if isinstance(example["returns"], dict):
-        assert isinstance(result, dict), "Expected a dict but got {}".format(
-            type(result)
-        )
+        assert isinstance(result, dict)
         exclude_regex_paths = []
         exclude_paths = []
         ignore_order_func = None
@@ -282,11 +337,9 @@ def check_return_value(example, result, connection, file):
             exclude_regex_paths=exclude_regex_paths,
             ignore_order_func=ignore_order_func,
         )
-        assert {} == diff, "Differences: {}".format(str(diff))
+        assert {} == diff, f"Differences: {diff!s}"
     elif isinstance(example["returns"], list):
-        assert isinstance(result, list), "Expected a list but got {}".format(
-            type(result)
-        )
+        assert isinstance(result, list)
         diff = DeepDiff(
             example["returns"],
             result,
@@ -294,17 +347,14 @@ def check_return_value(example, result, connection, file):
             ignore_numeric_type_changes=True,
             ignore_nan_inequality=True,
         )
-        assert {} == diff, "Differences: {}".format(str(diff))
+        assert {} == diff, f"Differences: {diff!s}"
     elif isinstance(example["returns"], float) and math.isnan(example["returns"]):
-        assert math.isnan(result), "Got {} instead of NaN".format(result)
+        assert math.isnan(result), f"Got {result} instead of NaN"
     elif isinstance(example["returns"], float) or isinstance(example["returns"], int):
-        msg = "Expected a numerical result but got {} of type {}".format(
-            result, type(result)
-        )
+        msg = f"Expected a numerical result but got {result} of type {type(result)}"
         assert isinstance(result, float) or isinstance(result, int), msg
         assert not math.isnan(result), "Got unexpected NaN as result"
         # handle numerical data with a delta
-        assert result == pytest.approx(example["returns"], delta)
+        assert result == pytest.approx(example["returns"], rel=delta)
     else:
-        msg = "Expected {} but got {}".format(example["returns"], result)
-        assert result == example["returns"], msg
+        assert result == example["returns"]

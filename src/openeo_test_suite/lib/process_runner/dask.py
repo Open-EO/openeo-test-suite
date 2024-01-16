@@ -79,7 +79,7 @@ class Dask(ProcessTestRunner):
             try:
                 return BoundingBox(**data)
             except Exception as e:
-                raise Exception("Failed to parse bounding box: {}".format(str(e)))
+                raise ValueError("Failed to parse bounding box") from e
 
         return data
 
