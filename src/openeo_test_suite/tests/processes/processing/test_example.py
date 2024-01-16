@@ -348,7 +348,7 @@ def check_return_value(example, result, connection, file):
         )
         assert {} == diff, f"Differences: {diff!s}"
     elif isinstance(example["returns"], float) and math.isnan(example["returns"]):
-        assert math.isnan(result), f"Got {result} instead of NaN"
+        assert isinstance(result, float) and math.isnan(result), f"Got {result} instead of NaN"
     elif isinstance(example["returns"], float) or isinstance(example["returns"], int):
         msg = f"Expected a numerical result but got {result} of type {type(result)}"
         assert isinstance(result, float) or isinstance(result, int), msg
