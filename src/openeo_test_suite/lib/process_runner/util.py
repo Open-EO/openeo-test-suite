@@ -1,8 +1,13 @@
+import re
 from datetime import datetime, timezone
 
 import numpy as np
+import pandas as pd
 import xarray as xr
-from dateutil.parser import parse
+from dateutil.parser import isoparse
+from pandas._libs.tslibs.timestamps import Timestamp
+
+ISO8601_REGEX = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}"
 
 
 def numpy_to_native(data, expected):
@@ -27,10 +32,17 @@ def datacube_to_xarray(cube):
     for name in cube["order"]:
         dim = cube["dimensions"][name]
         if dim["type"] == "temporal":
-            # date replace for older Python versions that don't support ISO parsing (only available since 3.11)
             values = [
-                datetime.fromisoformat(date.replace("Z", "")) for date in dim["values"]
+                isostr_to_datetime(date, fail_on_error=False) for date in dim["values"]
             ]
+            # Verify that the values are all datetimes, otherwise likely the tests are invalid
+            if all(isinstance(date, datetime) for date in values):
+                # Ot looks like xarray does not support creating proper time dimensions from datetimes,
+                # so we convert to np.datetime64 explicitly.
+                # np.datetime64 doesn't like timezone-aware datetimes, so we remove the timezone.
+                values = [np.datetime64(dt.replace(tzinfo=None), "ns") for dt in values]
+            else:
+                raise Exception("Mixed datetime types in temporal dimension")
         elif dim["type"] == "spatial":
             values = dim["values"]
             if "reference_system" in dim:
@@ -60,7 +72,8 @@ def xarray_to_datacube(data):
         type = "bands"
         values = []
         axis = None
-        if np.issubdtype(data.coords[c].dtype, np.datetime64):
+        dtype = data.coords[c].dtype
+        if np.issubdtype(dtype, np.datetime64) or isinstance(dtype, Timestamp):
             type = "temporal"
             values = [datetime_to_isostr(date) for date in data.coords[c].values]
         else:
@@ -71,6 +84,8 @@ def xarray_to_datacube(data):
             elif c == "y":  # todo: non-standardized
                 type = "spatial"
                 axis = "y"
+            elif c == "t":  # todo: non-standardized
+                type = "temporal"
 
         dim = {"type": type, "values": values}
         if axis is not None:
@@ -93,15 +108,36 @@ def xarray_to_datacube(data):
     return cube
 
 
-def isostr_to_datetime(dt):
-    return parse(dt)
+def isostr_to_datetime(dt, fail_on_error=True):
+    if not fail_on_error:
+        try:
+            return isostr_to_datetime(dt)
+        except:
+            return dt
+    else:
+        if re.match(ISO8601_REGEX, dt):
+            return isoparse(dt)
+        else:
+            raise Exception(
+                "Datetime is not in ISO format (YYYY-MM-DDThh:mm:ss plus timezone))"
+            )
 
 
 def datetime_to_isostr(dt):
-    # Convert numpy.datetime64 to timestamp (in seconds)
-    timestamp = dt.astype("datetime64[s]").astype(int)
-    # Create a datetime object from the timestamp
-    dt_object = datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc)
+    if isinstance(dt, Timestamp):
+        dt_object = dt.to_pydatetime()
+    elif isinstance(dt, np.datetime64):
+        # Convert numpy.datetime64 to timestamp (in seconds)
+        timestamp = dt.astype("datetime64[s]").astype(int)
+        # Create a datetime object from the timestamp
+        dt_object = datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc)
+    elif isinstance(dt, datetime):
+        dt_object = dt
+    elif re.match(ISO8601_REGEX, dt):
+        return dt
+    else:
+        raise NotImplementedError("Unsupported datetime type")
+
     # Convert to ISO format string
     return dt_object.isoformat().replace("+00:00", "Z")
 
