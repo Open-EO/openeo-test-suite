@@ -95,9 +95,7 @@ def test_process(
             connection=connection,
             file=file,
         )
-    except Exception as e:
-        # TODO: this `except: pytest.skip()` is overly liberal, possibly hiding real issues.
-        #       On what precise conditions should we skip? e.g. NotImplementedError?
+    except NotImplementedError as e:
         pytest.skip(str(e))
 
     throws = bool(example.get("throws"))
@@ -111,7 +109,6 @@ def test_process(
 
     # check the process results / behavior
     if throws and returns:
-        # TODO what does it mean if test can both throw and return?
         if isinstance(result, Exception):
             check_exception(example, result)
         else:
@@ -121,8 +118,6 @@ def test_process(
     elif returns:
         check_return_value(example, result, connection, file)
     else:
-        # TODO: skipping at this point of test is a bit useless.
-        #       Instead: skip earlier, or just consider the test as passed?
         pytest.skip(
             f"Test for process {process_id} doesn't provide an expected result for arguments: {example['arguments']}"
         )
@@ -286,13 +281,12 @@ def check_non_json_values(value):
 def check_exception(example, result):
     assert isinstance(result, Exception), f"Expected an exception, but got {result}"
     if isinstance(example["throws"], str):
+        # todo: we should assert here and remove the warning, but right now tooling doesn't really implement this
+        # assert result.__class__.__name__ == example["throws"]
         if result.__class__.__name__ != example["throws"]:
-            # TODO: better way to report this warning?
             _log.warning(
                 f"Expected exception {example['throws']} but got {result.__class__}"
             )
-        # todo: we should enable this end remove the two lines above, but right now tooling doesn't really implement this
-        # assert result.__class__.__name__ == example["throws"]
 
 
 def check_return_value(example, result, connection, file):
@@ -346,7 +340,9 @@ def check_return_value(example, result, connection, file):
         )
         assert {} == diff, f"Differences: {diff!s}"
     elif isinstance(example["returns"], float) and math.isnan(example["returns"]):
-        assert isinstance(result, float) and math.isnan(result), f"Got {result} instead of NaN"
+        assert isinstance(result, float) and math.isnan(
+            result
+        ), f"Got {result} instead of NaN"
     elif isinstance(example["returns"], float) or isinstance(example["returns"], int):
         msg = f"Expected a numerical result but got {result} of type {type(result)}"
         assert isinstance(result, float) or isinstance(result, int), msg
