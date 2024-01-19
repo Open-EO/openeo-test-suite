@@ -1,5 +1,3 @@
-import pytest
-
 from openeo_test_suite.lib.workflows.io import load_netcdf_dataarray
 
 LEVEL = "L1"

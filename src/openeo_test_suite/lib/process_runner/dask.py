@@ -27,9 +27,9 @@ def create_process_registry():
     ]
 
     # not sure why this is needed
-    from openeo_processes_dask.process_implementations.math import e
+    import openeo_processes_dask.process_implementations.math
 
-    processes_from_module.append(e)
+    processes_from_module.append(openeo_processes_dask.process_implementations.math.e)
 
     specs_module = importlib.import_module("openeo_processes_dask.specs")
     specs = {
@@ -79,7 +79,7 @@ class Dask(ProcessTestRunner):
             try:
                 return BoundingBox(**data)
             except Exception as e:
-                raise ValueError("Failed to parse bounding box") from e
+                raise ValueError("Failed to encode bounding box") from e
 
         return data
 

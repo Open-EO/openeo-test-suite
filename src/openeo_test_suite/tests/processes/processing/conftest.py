@@ -21,7 +21,7 @@ def runner(request) -> str:
     elif "OPENEO_RUNNER" in os.environ:
         runner = os.environ["OPENEO_RUNNER"]
     else:
-        runner = "http"
+        runner = "skip"
 
     _log.info(f"Using runner {runner!r}")
 
@@ -41,7 +41,9 @@ def auto_authenticate() -> bool:
 def connection(
     request, runner: str, auto_authenticate: bool, pytestconfig
 ) -> ProcessTestRunner:
-    # TODO: avoid overriding existing "connection" fixture with a different kind of object (ProcessTestRunner)
+    # TODO: this fixture override changes the return type of the original `connection` fixture,
+    #       which might lead to problems due to broken assumptions
+
     if runner == "dask":
         from openeo_test_suite.lib.process_runner.dask import Dask
 
@@ -50,7 +52,11 @@ def connection(
         from openeo_test_suite.lib.process_runner.vito import Vito
 
         return Vito()
-    else:
+    elif runner == "skip":
+        from openeo_test_suite.lib.process_runner.skip import SkippingRunner
+
+        return SkippingRunner()
+    elif runner == "http":
         from openeo_test_suite.lib.process_runner.http import Http
 
         backend_url = get_backend_url(request.config, required=True)
@@ -63,3 +69,6 @@ def connection(
                 con.authenticate_oidc()
 
         return Http(con)
+
+    else:
+        raise ValueError(f"Unknown runner {runner!r}")

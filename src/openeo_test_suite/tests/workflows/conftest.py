@@ -39,13 +39,13 @@ def auto_authenticate() -> bool:
 @pytest.fixture
 def cube_one_day_red(
     connection,
-    bounding_box,
+    bounding_box_32632,
     temporal_interval_one_day,
     s2_collection,
     skipper,
 ) -> openeo.DataCube:
     params = {
-        "spatial_extent": bounding_box,
+        "spatial_extent": bounding_box_32632,
         "temporal_extent": temporal_interval_one_day,
         "bands": ["B04"],
     }
@@ -61,13 +61,13 @@ def cube_one_day_red(
 @pytest.fixture
 def cube_one_day_red_nir(
     connection,
-    bounding_box,
+    bounding_box_32632,
     temporal_interval_one_day,
     s2_collection,
     skipper,
 ) -> openeo.DataCube:
     params = {
-        "spatial_extent": bounding_box,
+        "spatial_extent": bounding_box_32632,
         "temporal_extent": temporal_interval_one_day,
         "bands": ["B04", "B08"],
     }
@@ -83,13 +83,13 @@ def cube_one_day_red_nir(
 @pytest.fixture
 def cube_red_nir(
     connection,
-    bounding_box,
+    bounding_box_32632,
     temporal_interval,
     s2_collection,
     skipper,
 ) -> openeo.DataCube:
     params = {
-        "spatial_extent": bounding_box,
+        "spatial_extent": bounding_box_32632,
         "temporal_extent": temporal_interval,
         "bands": ["B04", "B08"],
     }
@@ -124,24 +124,23 @@ def cube_red_10x10(
     return cube
 
 
-# @pytest.fixture
-# def cube_full_extent(
-#     connection,
-#     temporal_interval,
-#     s2_collection,
-# ) -> dict:
-#     if "http" in s2_collection:
-#         cube = connection.load_stac(s2_collection, temporal_extent=temporal_interval)
-#     else:
-#         # Maybe not the best idea to load a full openEO collection?
-#         # It would work fine if the STAC sample collection is replicated
-#         return None
-#     return cube
-
-
 @pytest.fixture
 def bounding_box(
     west=10.342, east=11.352, south=46.490, north=46.495, crs="EPSG:4326"
+) -> dict:
+    spatial_extent = {
+        "west": west,
+        "east": east,
+        "south": south,
+        "north": north,
+        "crs": crs,
+    }
+    return spatial_extent
+
+
+@pytest.fixture
+def bounding_box_32632(
+    west=679720, east=680680, south=5151080, north=5151920, crs="EPSG:32632"
 ) -> dict:
     spatial_extent = {
         "west": west,
@@ -183,7 +182,7 @@ def collection_dims(
     s2_collection,
 ):
     if "/" in s2_collection:
-        # I ocnsider it as a STAC url
+        # I consider it as a STAC url
         parsed_url = urllib.parse.urlparse(s2_collection)
         if not bool(parsed_url.scheme):
             parsed_url = parsed_url._replace(**{"scheme": "https"})

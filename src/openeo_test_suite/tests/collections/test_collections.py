@@ -15,7 +15,7 @@ def validate_stac_dict(collection_dict: dict):
     stac = stac_validator.StacValidate()
     is_valid_stac = stac.validate_dict(collection_dict)
     if not is_valid_stac:
-        raise Exception(stac.message)
+        raise ValueError(stac.message)
 
 
 def test_get_collections(connection):

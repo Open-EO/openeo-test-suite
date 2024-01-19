@@ -70,9 +70,6 @@ def test_process(
     experimental,
     skipper,
 ):
-    if skip_experimental and experimental:
-        pytest.skip(f"Skipping experimental process {process_id}")
-
     skipper.skip_if_unmatching_process_level(level)
     if len(processes) > 0 and process_id not in processes:
         pytest.skip(
@@ -81,6 +78,9 @@ def test_process(
 
     # check whether the process is available
     skipper.skip_if_unsupported_process([process_id])
+
+    if skip_experimental and experimental:
+        pytest.skip("Skipping experimental process {}".format(id))
 
     # check whether any additionally required processes are available
     if "required" in example:
@@ -262,7 +262,7 @@ def _load_ref(ref: str, file: Path):
             )
     except Exception as e:
         # TODO: is this try-except actually useful?
-        raise Exception(f"Failed to load external reference {ref}") from e
+        raise RuntimeError(f"Failed to load external reference {ref}") from e
 
 
 def check_non_json_values(value):

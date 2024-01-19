@@ -9,23 +9,37 @@
 
 ## Individual Process Testing
 
-### Examples
+### Usage examples
 
-- `pytest --openeo-backend-url=https://openeo.cloud --processes=min,max`
-- `pytest --runner=vito --process-levels=L1,L2,L2A`
-- `pytest --runner=dask`
-- `pytest src/openeo_test_suite/tests/processes/processing/test_example.py --runner=dask`
+Specify test path `src/openeo_test_suite/tests/processes/processing` to only run individual process tests.
+
+
+```bash
+# Basic default behavior: run all individual process tests,
+# but with the default runner (skip), so no tests will actually be executed.
+pytest src/openeo_test_suite/tests/processes
+
+# Run tests for a subset of processes with the HTTP runner
+# against the openEO Platform backend at openeo.cloud
+pytest --runner=http --openeo-backend-url=openeo.cloud --processes=min,max src/openeo_test_suite/tests/processes/processing
+
+# Run tests for a subset of processes with the VITO runner
+pytest --runner=vito --process-levels=L1,L2,L2A src/openeo_test_suite/tests/processes/processing
+
+# Run all individual process tests with the Dask runner
+pytest --runner=dask src/openeo_test_suite/tests/processes
+```
 
 ### Parameters
 
-Specify `src/openeo_test_suite/tests/processes/processing/test_example.py` to only run individual process tests.
-
 - `--runner`: The execution engine. One of:
-  - `vito` (needs <https://github.com/Open-EO/openeo-python-driver> being installed)
-  - `dask` (needs optional Dask dependencies)
-  - `http` (**default**, requires `--openeo-backend-url` to be set)
+  - `skip` (**default**) skip all individual process tests
+  - `vito` (requires [openeo_driver](https://github.com/Open-EO/openeo-python-driver) package being installed in test environment)
+  - `dask` (requires [openeo_processes_dask](https://github.com/Open-EO/openeo-processes-dask) package being installed in test environment)
+  - `http` (requires `--openeo-backend-url` to be set)
 - `--process-levels`: All [process profiles](https://openeo.org/documentation/1.0/developers/profiles/processes.html) to test against, separated by comma. You need to list all levels explicitly, e.g., L2 does **not** include L1 automatically. Example: `L1,L2,L2A`. By default tests against all processes.
 - `--processes`: A list of processes to test against, separated by comma. Example: `apply,reduce_dimension`. By default tests against all processes.
+- `--experimental`: Enables tests for experimental processes. By default experimental processes will be skipped.
 
 ### Runners
 

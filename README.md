@@ -5,6 +5,11 @@ Test suite for validation of openEO back-ends against the openEO API and related
 
 ## Install/Setup
 
+Clone this repository and some git submodules with additional assets/data, e.g.:
+
+```bash
+git clone --recurse-submodules https://github.com/Open-EO/openeo-test-suite.git
+```
 
 As always in Python usage and development,
 it is recommended to work in some sort of virtual environment (`venv`, `virtualenv`, `conda`, `docker`, ...)
