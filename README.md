@@ -19,7 +19,7 @@ focussing on a specific API aspect to test or verify
 > Make sure to also check the more [detailed documentation of the test run options](#run-options) further in the docs.
 
 
-- *WP1* General test suite framework (lead implementation partner: VITO)
+- **WP1 General test suite framework** (lead implementation partner: VITO)
   - Main location: [`src/openeo_test_suite/lib`](./src/openeo_test_suite/lib)
   - Provides various reusable utilities and helpers to power the openEO test suite,
     and defines a pytest plugin to properly hook into the various phases of the pytest framework.
@@ -28,7 +28,7 @@ focussing on a specific API aspect to test or verify
     ```bash
     pytest src/openeo_test_suite/lib/internal-tests
     ```
-- *WP2* Validation of collection metadata (lead implementation partner: EURAC)
+- **WP2 Validation of collection metadata** (lead implementation partner: EURAC)
   - Main location: [`src/openeo_test_suite/tests/collections`](./src/openeo_test_suite/tests/collections)
   - Defines tests to validate openEO collection metadata against specs like
     the [openEO API](https://openeo.org/) and [STAC](https://stacspec.org/en).
@@ -38,12 +38,12 @@ focussing on a specific API aspect to test or verify
       -U https://openeo.example \
       --html=reports/collection-metadata.html
     ```
-- *WP3* Validation of process metadata (lead implementation partner: EODC)
+- **WP3 Validation of process metadata** (lead implementation partner: EODC)
   - Main location: [`src/openeo_test_suite/tests/processes/metadata`](./src/openeo_test_suite/tests/processes/metadata)
   - TODO: [Open-EO/openeo-test-suite#19](https://github.com/Open-EO/openeo-test-suite/issues/19)
-- *WP4* General openEO API compliance validation (lead implementation partner: EODC)
+- **WP4 General openEO API compliance validation** (lead implementation partner: EODC)
   - TODO: [Open-EO/openeo-test-suite#20](https://github.com/Open-EO/openeo-test-suite/issues/20)
-- *WP5* Individual process testing (lead implementation partner: M. Mohr)
+- **WP5 Individual process testing** (lead implementation partner: M. Mohr)
   - Main location: [`src/openeo_test_suite/tests/processes/processing`](./src/openeo_test_suite/tests/processes/processing)
   - Provides tests to validate individual openEO processes,
     based on the expected input-output examples
@@ -57,7 +57,7 @@ focussing on a specific API aspect to test or verify
     Note that this invocation will not actually execute anything,
     see the [runner info](#individual-process-testing-runner)
     and the [more extensive usage examples](#individual-process-testing-examples) for more information and functional examples.
-- *WP6* Full process graph execution (lead implementation partner: EURAC)
+- **WP6 Full process graph execution** (lead implementation partner: EURAC)
   - Main location: [`src/openeo_test_suite/tests/workflows`](./src/openeo_test_suite/tests/workflows)
   - Provides tests to run full processes graphs and evaluate the results.
   - Usage example of just running these tests against a desired openEO backend URL:
