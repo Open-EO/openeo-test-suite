@@ -15,7 +15,7 @@ focussing on a specific API aspect to test or verify
 
 
 > **Note**
-> In the following overview some invocation examples are given as basic reference.
+> In the following overview includes some invocation examples that are given as basic reference.
 > Make sure to also check the more [detailed documentation of the test run options](#run-options) further in the docs.
 
 
@@ -109,7 +109,7 @@ activate the virtual environment in your shell with:
 source venv/bin/activate
 ```
 
-### Install openeo-test-suite package (with dependencies)
+### Install `openeo-test-suite` package (with dependencies)
 
 Install the project and its dependencies in your virtual environment with:
 
@@ -178,8 +178,8 @@ If both are specified, the union of both will be considered.
 
 ### Runner for individual process testing <a name="individual-process-testing-runner"></a>
 
-One module of the test suite is dedicated to **individual process testing**,
-where each process is tested individually with a given set of inputs and expected outputs.
+The goal of the **individual process testing** module of the test suite
+is testing each openEO process individually with one or more pairs of input and expected output.
 Because there are a lot of these tests (order of thousands),
 it is very time-consuming to run these through the standard, HTTP based openEO REST API.
 As a countermeasure, the test suite ships with several experimental **runners**
