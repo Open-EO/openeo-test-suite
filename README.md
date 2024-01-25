@@ -3,7 +3,69 @@
 
 Test suite for validation of openEO back-ends against the openEO API and related specifications.
 
-## Install/Setup
+
+
+## Project structure and modular design
+
+The openEO test suite was developed in separate work packages,
+which is roughly reflected in the project structure.
+The separate modules allow to run the test suite in a more fine-grained way,
+focussing on a specific API aspect to test or verify
+(e.g. just collection metadata validation or individual process testing).
+
+In the following overview some invocation examples are given as basic reference.
+Make sure to also check the more [detailed documentation of the test run options](#run-options) further in the docs.
+
+
+- WP1 General test suite framework (lead implementation partner: VITO)
+  - Main location: [`src/openeo_test_suite/lib`](./src/openeo_test_suite/lib)
+  - Provides various reusable utilities and helpers to power the openEO test suite,
+    and defines a pytest plugin to properly hook into the various phases of the pytest framework.
+  - This module also defines some "internal" tests that are just meant to test these utilities in isolation,
+    but it is not part of the openEO API test suite itself:
+    ```bash
+    pytest src/openeo_test_suite/lib/internal-tests
+    ```
+- WP2 Validation of collection metadata (lead implementation partner: EURAC)
+  - Main location: [`src/openeo_test_suite/tests/collections`](./src/openeo_test_suite/tests/collections)
+  - Defines tests to validate openEO collection metadata against specs like
+    the openEO API and STAC.
+  - Usage example of just running these tests against a desired openEO backend URL:
+    ```bash
+    pytest src/openeo_test_suite/tests/collections \
+      -U https://openeo.example \
+      --html=reports/collection-metadata.html
+    ```
+- WP3 Validation of process metadata (lead implementation partner: EODC)
+  - Main location: [`src/openeo_test_suite/tests/processes/metadata`](./src/openeo_test_suite/tests/processes/metadata)
+  - TODO: [Open-EO/openeo-test-suite#19](https://github.com/Open-EO/openeo-test-suite/issues/19)
+- WP4 General openEO API compliance validation (lead implementation partner: EODC)
+  - TODO: [Open-EO/openeo-test-suite#20](https://github.com/Open-EO/openeo-test-suite/issues/20)
+- WP5 Individual process testing (lead implementation partner: M. Mohr)
+  - Main location: [`src/openeo_test_suite/tests/processes/processing`](./src/openeo_test_suite/tests/processes/processing)
+  - Provides tests to validate individual openEO processes,
+    based on the expected input-output examples
+    defined in the [openeo-processes](https://github.com/Open-EO/openeo-processes) project
+  - Very basic usage example of just running these tests:
+    ```bash
+    pytest src/openeo_test_suite/tests/processes/processing \
+      --html=reports/individual-processes.html
+    ```
+    Note that this invocation will not actually execute anything,
+    see the [more extensive usage examples](#individual-process-testing-examples) for functional examples.
+- WP6 Full process graph execution (lead implementation partner: EURAC)
+  - Main location: [`src/openeo_test_suite/tests/workflows`](./src/openeo_test_suite/tests/workflows)
+  - Provides tests to run full processes graphs and evaluate the results.
+  - Usage example of just running these tests against a desired openEO backend URL:
+    ```bash
+    pytest src/openeo_test_suite/tests/workflows \
+      -U https://openeo.example \
+      --s2-collection SENTINEL2_L2A \
+      --html=reports/workflows.html
+    ```
+
+
+## Installation and setup
 
 Clone this repository and some git submodules with additional assets/data, e.g.:
 
@@ -43,7 +105,7 @@ activate the virtual environment in your shell with:
 source venv/bin/activate
 ```
 
-### Install dependencies
+### Install openeo-test-suite package (with dependencies)
 
 Install the project and its dependencies in your virtual environment with:
 
@@ -56,10 +118,10 @@ which makes sure that code changes will be reflected immediately in your virtual
 without the need of (re)installing the project.
 
 
-#### Additional dependencies related to runners for individual process testing
+### Additional optional dependencies related to runners for individual process testing
 
 The individual process testing module of the test suite allows to pick
-a specific process "runner" (see further for more documentation).
+a specific process "runner" (see [further](#individual-process-testing-runner) for more documentation).
 Some of these runners require additional optional dependencies to be installed in your virtual environment,
 which can be done by providing an appropriate "extra" identifier in the `pip install` command:
 
@@ -73,13 +135,13 @@ which can be done by providing an appropriate "extra" identifier in the `pip ins
     ```
 
 Note that it might be not possible to install both "dask" and "vito" extras
-in the same environment because of conflicting dependency constraints.
+seamlessly in the same environment because of conflicting dependency constraints.
 
 
-## Running the test suite
+## Test suite run options <a name="run-options"></a>
 
-The test suite at least requires an openEO backend URL to run against.
-It can be specified through a `pytest` command line option
+Most modules of the test suite at least require an openEO backend URL to run against.
+It can be specified through a `pytest` command line option:
 
     pytest --openeo-backend-url=openeo.example
 
@@ -87,12 +149,6 @@ It can be specified through a `pytest` command line option
     pytest -U openeo.example
 
 If no explicit protocol is specified, `https://` will be assumed automatically.
-
-
-## Additional run options
-
-In addition to the `--openeo-backend-url` option, there are several other options
-to control some aspects of the test suite run.
 
 ### Process selection
 
@@ -116,7 +172,7 @@ If both are specified, the union of both will be considered.
   Enabling this option will consider experimental processes and tests.
 
 
-### Runner for individual process testing
+### Runner for individual process testing <a name="individual-process-testing-runner"></a>
 
 One module of the test suite is dedicated to **individual process testing**,
 where each process is tested individually with a given set of inputs and expected outputs.
@@ -156,7 +212,8 @@ See [openeo_test_suite/lib/process_runner](https://github.com/Open-EO/openeo-tes
 for more details about these runners and inspiration to implement your own runner.
 
 
-#### Usage examples of individual process testing with runner option
+
+#### Usage examples of individual process testing with runner option <a name="individual-process-testing-examples"></a>
 
 The individual process tests can be run by specifying the `src/openeo_test_suite/tests/processes/processing` as test path.
 Some use examples with different options discussed above:
