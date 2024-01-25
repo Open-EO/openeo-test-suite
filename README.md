@@ -13,47 +13,51 @@ The separate modules allow to run the test suite in a more fine-grained way,
 focussing on a specific API aspect to test or verify
 (e.g. just collection metadata validation or individual process testing).
 
-In the following overview some invocation examples are given as basic reference.
-Make sure to also check the more [detailed documentation of the test run options](#run-options) further in the docs.
+
+> **Note**
+> In the following overview some invocation examples are given as basic reference.
+> Make sure to also check the more [detailed documentation of the test run options](#run-options) further in the docs.
 
 
-- WP1 General test suite framework (lead implementation partner: VITO)
+- *WP1* General test suite framework (lead implementation partner: VITO)
   - Main location: [`src/openeo_test_suite/lib`](./src/openeo_test_suite/lib)
   - Provides various reusable utilities and helpers to power the openEO test suite,
     and defines a pytest plugin to properly hook into the various phases of the pytest framework.
   - This module also defines some "internal" tests that are just meant to test these utilities in isolation,
-    but it is not part of the openEO API test suite itself:
+    but it is not part of the openEO test suite itself:
     ```bash
     pytest src/openeo_test_suite/lib/internal-tests
     ```
-- WP2 Validation of collection metadata (lead implementation partner: EURAC)
+- *WP2* Validation of collection metadata (lead implementation partner: EURAC)
   - Main location: [`src/openeo_test_suite/tests/collections`](./src/openeo_test_suite/tests/collections)
   - Defines tests to validate openEO collection metadata against specs like
-    the openEO API and STAC.
+    the [openEO API](https://openeo.org/) and [STAC](https://stacspec.org/en).
   - Usage example of just running these tests against a desired openEO backend URL:
     ```bash
     pytest src/openeo_test_suite/tests/collections \
       -U https://openeo.example \
       --html=reports/collection-metadata.html
     ```
-- WP3 Validation of process metadata (lead implementation partner: EODC)
+- *WP3* Validation of process metadata (lead implementation partner: EODC)
   - Main location: [`src/openeo_test_suite/tests/processes/metadata`](./src/openeo_test_suite/tests/processes/metadata)
   - TODO: [Open-EO/openeo-test-suite#19](https://github.com/Open-EO/openeo-test-suite/issues/19)
-- WP4 General openEO API compliance validation (lead implementation partner: EODC)
+- *WP4* General openEO API compliance validation (lead implementation partner: EODC)
   - TODO: [Open-EO/openeo-test-suite#20](https://github.com/Open-EO/openeo-test-suite/issues/20)
-- WP5 Individual process testing (lead implementation partner: M. Mohr)
+- *WP5* Individual process testing (lead implementation partner: M. Mohr)
   - Main location: [`src/openeo_test_suite/tests/processes/processing`](./src/openeo_test_suite/tests/processes/processing)
   - Provides tests to validate individual openEO processes,
     based on the expected input-output examples
     defined in the [openeo-processes](https://github.com/Open-EO/openeo-processes) project
+    under [Open-EO/openeo-processes#468](https://github.com/Open-EO/openeo-processes/pull/468)
   - Very basic usage example of just running these tests:
     ```bash
     pytest src/openeo_test_suite/tests/processes/processing \
       --html=reports/individual-processes.html
     ```
     Note that this invocation will not actually execute anything,
-    see the [more extensive usage examples](#individual-process-testing-examples) for functional examples.
-- WP6 Full process graph execution (lead implementation partner: EURAC)
+    see the [runner info](#individual-process-testing-runner)
+    and the [more extensive usage examples](#individual-process-testing-examples) for more information and functional examples.
+- *WP6* Full process graph execution (lead implementation partner: EURAC)
   - Main location: [`src/openeo_test_suite/tests/workflows`](./src/openeo_test_suite/tests/workflows)
   - Provides tests to run full processes graphs and evaluate the results.
   - Usage example of just running these tests against a desired openEO backend URL:
@@ -118,7 +122,7 @@ which makes sure that code changes will be reflected immediately in your virtual
 without the need of (re)installing the project.
 
 
-### Additional optional dependencies related to runners for individual process testing
+### Additional optional dependencies related to runners for individual process testing <a name="runner-dependencies"></a>
 
 The individual process testing module of the test suite allows to pick
 a specific process "runner" (see [further](#individual-process-testing-runner) for more documentation).
@@ -199,12 +203,12 @@ with currently one of the following options:
     These tests will be marked as skipped.
 - `dask`: Executes the tests directly via the [openEO Dask implementation](https://github.com/Open-EO/openeo-processes-dask) (as used by EODC, EURAC, and others)
   - Requires [openeo_processes_dask](https://github.com/Open-EO/openeo-processes-dask) package being installed in test environment.
-    See installation instructions above for more practical info.
+    See [installation instructions](#runner-dependencies) above for more practical info.
   - Covers all implemented processes.
 - `vito`: Executes the tests directly via the
   [openEO Python Driver implementation](https://github.com/Open-EO/openeo-python-driver) (as used by CDSE, VITO/Terrascope, and others).
   - Requires [openeo_driver](https://github.com/Open-EO/openeo-python-driver) package being installed in test environment.
-    See installation instructions above for more practical info.
+    See [installation instructions](#runner-dependencies) above for more practical info.
   - Only covers a subset of processes due to the underlying architecture of the back-end implementation.
     In particular, it only covers the pure Python code paths, but not the PySpark related aspects.
 
