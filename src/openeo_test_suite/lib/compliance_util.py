@@ -36,6 +36,7 @@ def test_endpoint(
     expected_status_codes: Union[list[int], int] = [200],
     return_response: bool = False,
     mock_response_content: bytes = None,
+    required: bool = True,
 ):
     full_endpoint_url = f"{base_url}{endpoint_path}"
     session = Session()
@@ -77,9 +78,9 @@ def test_endpoint(
     except Exception as e:
         print_test_results(e, endpoint_path=endpoint_path, test_name=test_name)
         if return_response:
-            return check_test_results(e), response
+            return check_test_results(e, required=required), response
         else:
-            return check_test_results(e)
+            return check_test_results(e, required=required)
     else:
         if return_response:
             return "", response
@@ -186,12 +187,13 @@ def print_test_results(e: Exception, endpoint_path: str, test_name: str = "?"):
     print("")
 
 
-def check_test_results(e: Exception):
+def check_test_results(e: Exception, required: bool = True):
     """
     prints the results of a openapi-core validation test
 
     e: the exception that was raised as a part of the response validation test
     test_name: the name of the test that ought to be displayed
+    required: is the endpoint required as per the spec.
     """
 
     # message is important
@@ -203,7 +205,7 @@ def check_test_results(e: Exception):
         elif e.actual_status_code == 500:
             fail_log = "Endpoint expects an id and the item does not exist."
         elif e.actual_status_code == 404 or e.actual_status_code == 501:
-            fail_log = "Endpoint is not implemented, only an error if it is REQUIRED."
+            fail_log = "Endpoint is not implemented." if required else ""
         elif e.actual_status_code == 410:
             fail_log = "Endpoint is not providing requested resource as it is gone. Logs are not provided if job is queued or created."
         else:
@@ -294,14 +296,14 @@ def get_spec_path():
     return _guess_root() / "openapi.yaml"
 
 
-def load_payloads_from_directory(directory_path: str) -> Iterator[dict]:
+def load_payloads_from_directory(directory_path: str) -> Iterator[str]:
     for filename in pathlib.Path(directory_path).glob("*.json"):
         file_path = os.path.join(directory_path, filename)
         with open(file_path, "r") as file:
             try:
                 # Load the JSON data from the file
                 data = json.load(file)
-                yield data
+                yield json.dumps(data)
             except json.JSONDecodeError:
                 _log.error(f"Error decoding JSON in file: {filename}")
             except Exception as e:
@@ -316,7 +318,7 @@ def set_uuid_in_job(json_data):
     # Set the 'id' field to the generated UUID
     json_data["process"]["id"] = new_id
     # Return the modified JSON object
-    return new_id, json_data
+    return new_id, json.dumps(json_data)
 
 
 def delete_id_resource(
@@ -343,19 +345,18 @@ def put_process_graphs(base_url: str, bearer_token: str):  # TODO id and so fort
 
     try:
         for payload in payloads:
-            id, payload = set_uuid_in_udp(payload)
+            id = str(uuid.uuid4().hex)
             created_udp_ids.append(id)
-            response = requests.put(
-                f"{base_url}process_graphs/{id}",
+            requests.put(
+                f"{base_url}/process_graphs/{id}",
                 data=payload,
                 headers={
                     "Content-Type": "application/json",
                     "Authorization": f"{bearer_token}",
                 },
             )
-            print(response)
     except Exception as e:
-        _log.error(f"Failed to create process graph: {e}")
+        print(f"Failed to create process graph: {e}")
     return created_udp_ids
 
 
@@ -388,7 +389,7 @@ def post_jobs(base_url: str, bearer_token: str):
 
         response = requests.post(
             full_endpoint_url,
-            data=json.dumps(payload),
+            data=payload,
             headers={
                 "Content-Type": "application/json",
                 "Authorization": f"{bearer_token}",

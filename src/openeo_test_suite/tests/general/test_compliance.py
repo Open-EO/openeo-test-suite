@@ -146,7 +146,11 @@ def test_GET_service_types(base_url: str, spec: Spec, bearer_token: str):
     test_name = "Service Types"
 
     fail_log = conformance_util.test_endpoint(
-        base_url=base_url, endpoint_path=endpoint_path, test_name=test_name, spec=spec
+        base_url=base_url,
+        endpoint_path=endpoint_path,
+        test_name=test_name,
+        spec=spec,
+        required=False,
     )
 
     assert fail_log == ""
@@ -228,33 +232,6 @@ def test_GET_me(base_url: str, spec: Spec, bearer_token: str):
         spec=spec,
         bearer_token=bearer_token,
     )
-
-    assert fail_log == ""
-
-    """
-    setup: collect list of collection ids
-    testing: test response by API for GET requests of all the collection ids
-    cleanup: None
-
-    """
-    fail_log = ""
-
-    collection_ids = [
-        collection["id"]
-        for collection in requests.get((f"{base_url}collections")).json()["collections"]
-    ]
-
-    # prepare list of endpoints
-    special_GET_endpoints_no_auth = [
-        (f"collections/{collection_id}", f"Test for collection/{collection_id}")
-        for collection_id in collection_ids
-    ]
-
-    # Run through all the special GET endpoints and test their response to a proper request.
-    for path, test_name in special_GET_endpoints_no_auth:
-        fail_log += conformance_util.test_endpoint(
-            base_url=base_url, endpoint_path=path, test_name=test_name, spec=spec
-        )
 
     assert fail_log == ""
 
