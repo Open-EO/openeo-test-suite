@@ -1,6 +1,8 @@
 import argparse
+import json
 import shlex
 import sys
+from pathlib import Path
 
 import openeo
 import pytest
@@ -14,6 +16,7 @@ from openeo_test_suite.lib.backend_under_test import (
     set_backend_under_test,
 )
 from openeo_test_suite.lib.process_selection import set_process_selection_from_config
+from openeo_test_suite.lib.version import get_openeo_versions
 
 
 def pytest_addoption(parser: pytest.Parser):
@@ -84,10 +87,12 @@ def pytest_configure(config: pytest.Config):
 
     # Add some additional info to HTML report
     # https://pytest-html.readthedocs.io/en/latest/user_guide.html#environment
-    config.stash[pytest_metadata.plugin.metadata_key]["Invocation"] = _invocation()
-    config.stash[pytest_metadata.plugin.metadata_key][
-        "openEO Test Suite version"
-    ] = openeo_test_suite.__version__
+    config.stash[pytest_metadata.plugin.metadata_key].update(
+        {
+            "Invocation": _invocation(),
+            "openEO versions": get_openeo_versions(),
+        }
+    )
 
 
 def _invocation() -> str:
@@ -99,7 +104,7 @@ def pytest_report_header(config: pytest.Config):
     """Implementation of `pytest_report_header` hook."""
     # Add info to terminal report
     return [
-        f"openEO Test Suite {openeo_test_suite.__version__}",
+        f"openEO versions: {get_openeo_versions()}",
         f"Invoked with: {_invocation()}",
     ]
 

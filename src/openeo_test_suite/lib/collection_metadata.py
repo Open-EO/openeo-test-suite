@@ -5,7 +5,7 @@ _log = logging.getLogger(__name__)
 
 
 class OpeneoApiCollectionTests:
-    # TODO: This OOP pattern is not necessary, this can just be a bunch of functions. These addition layers leak into the test report, making it harder to read.
+    # TODO: This OOP pattern is not necessary, this can just be a bunch of functions. These additional layers leak into the test report, making it harder to read.
     # TODO: Also, it's not necessary to define this in a separate file, it can just be a function in the test file
     def __init__(self, collection):
         self.test_stac_version(collection)
@@ -118,5 +118,8 @@ class OpeneoApiCollectionTests:
         """
         if "assets" in collection:
             assert isinstance(collection["assets"], dict)
-            if collection["stac_version"].startswith("0."):
+
+            # Note: the "collection-assets" (core) extension is required per openEO spec for STAC < 1.0.0-rc.1,
+            # but it was only introduced by STAC 1.0.0-beta.1, so we actually just check for the two beta versions before rc.1:
+            if collection["stac_version"] in {"1.0.0-beta.1", "1.0.0-beta.2"}:
                 assert "collection-assets" in collection["stac_extensions"]

@@ -5,10 +5,8 @@ import pytest
 from stac_validator import stac_validator
 
 from openeo_test_suite.lib.backend_under_test import get_collection_ids
+from openeo_test_suite.lib.collection_metadata import OpeneoApiCollectionTests
 from openeo_test_suite.lib.validate_stac import validate_stac_dict
-from openeo_test_suite.tests.collections.openeo_api_collection_tests import (
-    OpeneoApiCollectionTests,
-)
 
 _log = logging.getLogger(__name__)
 

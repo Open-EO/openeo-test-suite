@@ -294,14 +294,14 @@ def get_spec_path():
     return _guess_root() / "openapi.yaml"
 
 
-def load_payloads_from_directory(directory_path: str) -> Iterator[str]:
+def load_payloads_from_directory(directory_path: str) -> Iterator[dict]:
     for filename in pathlib.Path(directory_path).glob("*.json"):
         file_path = os.path.join(directory_path, filename)
         with open(file_path, "r") as file:
             try:
                 # Load the JSON data from the file
                 data = json.load(file)
-                yield json.dumps(data)
+                yield data
             except json.JSONDecodeError:
                 _log.error(f"Error decoding JSON in file: {filename}")
             except Exception as e:
@@ -316,7 +316,7 @@ def set_uuid_in_job(json_data):
     # Set the 'id' field to the generated UUID
     json_data["process"]["id"] = new_id
     # Return the modified JSON object
-    return new_id, json.dumps(json_data)
+    return new_id, json_data
 
 
 def delete_id_resource(
@@ -343,18 +343,19 @@ def put_process_graphs(base_url: str, bearer_token: str):  # TODO id and so fort
 
     try:
         for payload in payloads:
-            id = str(uuid.uuid4().hex)
+            id, payload = set_uuid_in_udp(payload)
             created_udp_ids.append(id)
-            requests.put(
-                f"{base_url}/process_graphs/{id}",
+            response = requests.put(
+                f"{base_url}process_graphs/{id}",
                 data=payload,
                 headers={
                     "Content-Type": "application/json",
                     "Authorization": f"{bearer_token}",
                 },
             )
+            print(response)
     except Exception as e:
-        print(f"Failed to create process graph: {e}")
+        _log.error(f"Failed to create process graph: {e}")
     return created_udp_ids
 
 
@@ -387,7 +388,7 @@ def post_jobs(base_url: str, bearer_token: str):
 
         response = requests.post(
             full_endpoint_url,
-            data=payload,
+            data=json.dumps(payload),
             headers={
                 "Content-Type": "application/json",
                 "Authorization": f"{bearer_token}",
