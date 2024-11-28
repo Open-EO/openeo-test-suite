@@ -35,6 +35,7 @@ def test_endpoint(
     method: str = "GET",
     expected_status_codes: Union[list[int], int] = [200],
     return_response: bool = False,
+    mock_response_content: bytes = None,
 ):
     full_endpoint_url = f"{base_url}{endpoint_path}"
     session = Session()
@@ -43,12 +44,18 @@ def test_endpoint(
     if bearer_token:
         headers["Authorization"] = bearer_token
 
+    if payload:
+        payload = json.loads(payload)
+
     response = session.request(
         method=method.upper(),
         url=full_endpoint_url,
         json=payload,
         headers=headers,
     )
+
+    if mock_response_content:
+        response._content = mock_response_content
 
     openapi_request = RequestsOpenAPIRequest(
         Request(method.upper(), full_endpoint_url, json=payload, headers=headers)
@@ -274,7 +281,7 @@ def _guess_root():
 
 def get_examples_path():
     return (
-        _guess_root().parents[2]
+        _guess_root().parents[1]
         / "src"
         / "openeo_test_suite"
         / "tests"
@@ -376,7 +383,7 @@ def post_jobs(base_url: str, bearer_token: str):
 
     # TESTING
     for payload in payloads:
-        _, payload = set_uuid_in_job(payload)
+        # _, payload = set_uuid_in_job(payload)
 
         response = requests.post(
             full_endpoint_url,

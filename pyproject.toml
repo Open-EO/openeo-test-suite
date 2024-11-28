@@ -23,7 +23,7 @@ dependencies = [
     "pytest-html>=4.1.0",
     "stac-validator>=3.3.0",
     "pytest-metadata>=3.0.0",
-    "openapi-core>=0.18.2",
+    "openapi-core>=0.19.4",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
