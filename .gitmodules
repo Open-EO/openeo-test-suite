@@ -4,4 +4,4 @@
 	branch = add-tests
 [submodule "assets/openeo-api"]
 	path = assets/openeo-api
-	url = git@github.com:Open-EO/openeo-api.git
+	url = https://github.com/Open-EO/openeo-api
