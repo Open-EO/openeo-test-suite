@@ -11,16 +11,20 @@ def load_netcdf_dataarray(
     band_dim_name: str = "bands",
 ) -> xarray.DataArray:
     """Load a data cube from a NetCDF file as a xarray DataArray"""
+
+    # TODO: avoid the try-except, and just work from `open_dataset`?
     try:
-        # TODO: avoid the try-except, and just work from `open_dataset`?
-        data = xarray.open_dataarray(path)
-    except ValueError:
         data = xarray.open_dataset(path, decode_coords="all")
         # VITO/CDSE write a Dataset even if there are no bands, with a default name 'var'
         if len(data.data_vars) == 1 and [v for v in data.data_vars] == ["var"]:
             data = data["var"]
+        elif len(data.data_vars) == 1 and [v for v in data.data_vars] == ["name"]:
+            data = data["name"]
         else:
-            data = data.to_dataarray(dim=band_dim_name)
+            data = data.to_array(dim=band_dim_name)
+    except ValueError:
+        data = xarray.open_dataarray(path)
+
     return data
 
 
