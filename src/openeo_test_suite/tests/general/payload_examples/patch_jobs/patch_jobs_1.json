@@ -1,41 +1,43 @@
 {
-	"title": "Custom Test Process",
-	"description": "Loads and Saves austrian ground motion data",
+	"title": "testpatch",
+	"description": null,
+	"plan": "eodc-cloud",
+	"budget": null,
 	"process": {
+		"categories": [],
+		"deprecated": false,
+		"experimental": false,
 		"process_graph": {
-		  "load1": {
-			"process_id": "load_collection",
-			"arguments": {
-			  "bands": [
-				"B01"
-			  ],
-			  "properties": {},
-			  "id": "CGLS_SSM_1KM",
-			  "spatial_extent": {
-				"west": 16.186110851391813,
-				"east": 16.576456845030226,
-				"south": 48.08764096726651,
-				"north": 48.29291292355549
-			  },
-			  "temporal_extent": [
-				"2020-01-01T00:00:00Z",
-				"2020-12-13T00:00:00Z"
-			  ]
-			}
-		  },
-		  "save2": {
-			"process_id": "save_result",
-			"arguments": {
-			  "data": {
-				"from_node": "load1"
-			  },
-			  "format": "NETCDF"
+			"load1": {
+				"process_id": "load_collection",
+				"arguments": {
+					"bands": [
+						"B01"
+					],
+					"properties": {},
+					"id": "CGLS_SSM_1KM",
+					"spatial_extent": {
+						"west": 16.186110851391813,
+						"east": 16.576456845030226,
+						"south": 48.08764096726651,
+						"north": 48.29291292355549
+					},
+					"temporal_extent": [
+						"2020-01-01T00:00:00Z",
+						"2020-12-13T00:00:00Z"
+					]
+				}
 			},
-			"result": true
-		  }
-		},
-		"parameters": []
-	  },
-	"plan": "free",
-	"budget": 100
-  }
+			"save2": {
+				"process_id": "save_result",
+				"arguments": {
+					"data": {
+						"from_node": "load1"
+					},
+					"format": "NETCDF"
+				},
+				"result": true
+			}
+		}
+	}
+}

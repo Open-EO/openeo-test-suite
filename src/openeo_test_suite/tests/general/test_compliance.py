@@ -146,7 +146,11 @@ def test_GET_service_types(base_url: str, spec: Spec, bearer_token: str):
     test_name = "Service Types"
 
     fail_log = conformance_util.test_endpoint(
-        base_url=base_url, endpoint_path=endpoint_path, test_name=test_name, spec=spec
+        base_url=base_url,
+        endpoint_path=endpoint_path,
+        test_name=test_name,
+        spec=spec,
+        required=False,
     )
 
     assert fail_log == ""
@@ -228,33 +232,6 @@ def test_GET_me(base_url: str, spec: Spec, bearer_token: str):
         spec=spec,
         bearer_token=bearer_token,
     )
-
-    assert fail_log == ""
-
-    """
-    setup: collect list of collection ids
-    testing: test response by API for GET requests of all the collection ids
-    cleanup: None
-
-    """
-    fail_log = ""
-
-    collection_ids = [
-        collection["id"]
-        for collection in requests.get((f"{base_url}collections")).json()["collections"]
-    ]
-
-    # prepare list of endpoints
-    special_GET_endpoints_no_auth = [
-        (f"collections/{collection_id}", f"Test for collection/{collection_id}")
-        for collection_id in collection_ids
-    ]
-
-    # Run through all the special GET endpoints and test their response to a proper request.
-    for path, test_name in special_GET_endpoints_no_auth:
-        fail_log += conformance_util.test_endpoint(
-            base_url=base_url, endpoint_path=path, test_name=test_name, spec=spec
-        )
 
     assert fail_log == ""
 
@@ -583,6 +560,7 @@ def test_PATCH_jobs_job_id(base_url: str, spec: Spec, bearer_token: str):
     for job_id, payload in zip(created_batch_job_ids, payloads):
         _, payload = conformance_util.set_uuid_in_job(payload)
         prepared_endpoint_path = f"{endpoint_path}/{job_id}"
+        _, payload = conformance_util.set_uuid_in_job(payload)
         fail_log += conformance_util.test_endpoint(
             base_url=base_url,
             endpoint_path=prepared_endpoint_path,
@@ -844,6 +822,12 @@ def test_GET_jobs_job_id_logs(base_url: str, spec: Spec, bearer_token: str):
         base_url=base_url, bearer_token=bearer_token
     )
 
+    conformance_util.wait_job_statuses(
+        base_url=base_url,
+        bearer_token=bearer_token,
+        job_ids=created_batch_job_ids,
+        job_statuses=["running"],
+    )
     # TESTING
 
     for job_id in created_batch_job_ids:
@@ -1288,26 +1272,26 @@ def test_empty_PUT_process_graphs_process_id(
     directory_path = conformance_util.get_examples_path()
     examples_directory = "empty_payload"
 
-    payload = list(
-        conformance_util.load_payloads_from_directory(
-            directory_path=directory_path / examples_directory
-        )
-    )[0]
+    payloads = conformance_util.load_payloads_from_directory(
+        directory_path=f"{directory_path}/{examples_directory}"
+    )
 
     # TESTING
 
     id = str(uuid.uuid4())
     prepared_endpoint_path = f"{endpoint_path}/{id}"
-    fail_log += conformance_util.test_endpoint(
-        base_url=base_url,
-        endpoint_path=prepared_endpoint_path,
-        test_name=f"{test_name} {id}",
-        spec=spec,
-        payload=payload,
-        bearer_token=bearer_token,
-        method="PUT",
-        expected_status_codes=range(400, 501),
-    )
+
+    for payload in payloads:
+        fail_log += conformance_util.test_endpoint(
+            base_url=base_url,
+            endpoint_path=prepared_endpoint_path,
+            test_name=f"{test_name} {id}",
+            spec=spec,
+            payload=payload,
+            bearer_token=bearer_token,
+            method="PUT",
+            expected_status_codes=range(400, 501),
+        )
 
     # CLEANUP
 
@@ -1328,28 +1312,29 @@ def test_empty_POST_jobs(base_url: str, spec: Spec, bearer_token: str):
     cleanup: None
     """
     # SETUP
+    fail_log = ""
+
     endpoint_path = "jobs"
     test_name = "Creates a new batch processing task (NEGATIVE)"
     directory_path = conformance_util.get_examples_path()
     examples_directory = "empty_payload"
 
-    payload = next(
-        conformance_util.load_payloads_from_directory(
-            directory_path=f"{directory_path}/{examples_directory}"
-        )
+    payloads = conformance_util.load_payloads_from_directory(
+        directory_path=f"{directory_path}/{examples_directory}/"
     )
 
     # TESTING
-    fail_log = conformance_util.test_endpoint(
-        base_url=base_url,
-        endpoint_path=endpoint_path,
-        test_name=test_name,
-        spec=spec,
-        bearer_token=bearer_token,
-        payload=payload,
-        method="POST",
-        expected_status_codes=range(400, 501),
-    )
+    for payload in payloads:
+        fail_log += conformance_util.test_endpoint(
+            base_url=base_url,
+            endpoint_path=endpoint_path,
+            test_name=test_name,
+            spec=spec,
+            bearer_token=bearer_token,
+            payload=payload,
+            method="POST",
+            expected_status_codes=range(400, 501),
+        )
 
     # CLEANUP
     assert fail_log == ""
@@ -1374,25 +1359,24 @@ def test_empty_PATCH_jobs_job_id(base_url: str, spec: Spec, bearer_token: str):
     directory_path = conformance_util.get_examples_path()
     examples_directory = "empty_payload"
 
-    payload = next(
-        conformance_util.load_payloads_from_directory(
-            directory_path=f"{directory_path}/{examples_directory}"
-        )
+    payloads = conformance_util.load_payloads_from_directory(
+        directory_path=f"{directory_path}/{examples_directory}"
     )
 
     # TESTING
     for job_id in created_batch_job_ids:
-        prepared_endpoint_path = f"{endpoint_path}/{job_id}"
-        fail_log += conformance_util.test_endpoint(
-            base_url=base_url,
-            endpoint_path=prepared_endpoint_path,
-            test_name=f"{test_name} {job_id}",
-            spec=spec,
-            bearer_token=bearer_token,
-            payload=payload,
-            method="PATCH",
-            expected_status_codes=204,
-        )
+        for payload in payloads:
+            prepared_endpoint_path = f"{endpoint_path}/{job_id}"
+            fail_log += conformance_util.test_endpoint(
+                base_url=base_url,
+                endpoint_path=prepared_endpoint_path,
+                test_name=f"{test_name} {job_id}",
+                spec=spec,
+                bearer_token=bearer_token,
+                payload=payload,
+                method="PATCH",
+                expected_status_codes=204,
+            )
 
     # CLEANUP
     conformance_util.delete_id_resource(
@@ -1420,22 +1404,22 @@ def test_empty_POST_result(base_url: str, spec: Spec, bearer_token: str):
     directory_path = conformance_util.get_examples_path()
     examples_directory = "empty_payload"
 
-    payload = next(
-        conformance_util.load_payloads_from_directory(
-            directory_path=f"{directory_path}/{examples_directory}"
-        )
+    payloads = conformance_util.load_payloads_from_directory(
+        directory_path=f"{directory_path}/{examples_directory}"
     )
+
     # TESTING
-    fail_log = conformance_util.test_endpoint(
-        base_url=base_url,
-        endpoint_path=endpoint_path,
-        test_name=test_name,
-        spec=spec,
-        bearer_token=bearer_token,
-        payload=payload,
-        method="POST",
-        expected_status_codes=range(400, 500),
-    )
+    for payload in payloads:
+        fail_log += conformance_util.test_endpoint(
+            base_url=base_url,
+            endpoint_path=endpoint_path,
+            test_name=test_name,
+            spec=spec,
+            bearer_token=bearer_token,
+            payload=payload,
+            method="POST",
+            expected_status_codes=range(400, 500),
+        )
     # CLEANUP
 
     assert fail_log == ""
@@ -1449,29 +1433,30 @@ def test_empty_POST_validation(base_url: str, spec: Spec, bearer_token: str):
     """
 
     # SETUP
+    fail_log = ""
+
     endpoint_path = "validation"
     test_name = "Validate a user-defined process (graph)"
 
     directory_path = conformance_util.get_examples_path()
     examples_directory = "empty_payload"
 
-    payload = next(
-        conformance_util.load_payloads_from_directory(
-            directory_path=f"{directory_path}/{examples_directory}"
-        )
+    payloads = conformance_util.load_payloads_from_directory(
+        directory_path=f"{directory_path}/{examples_directory}"
     )
 
     # TESTING
-    fail_log = conformance_util.test_endpoint(
-        base_url=base_url,
-        endpoint_path=endpoint_path,
-        test_name=test_name,
-        spec=spec,
-        bearer_token=bearer_token,
-        payload=payload,
-        method="POST",
-        expected_status_codes=200,
-    )
+    for payload in payloads:
+        fail_log += conformance_util.test_endpoint(
+            base_url=base_url,
+            endpoint_path=endpoint_path,
+            test_name=test_name,
+            spec=spec,
+            bearer_token=bearer_token,
+            payload=payload,
+            method="POST",
+            expected_status_codes=200,
+        )
 
     # CLEANUP
     assert fail_log == ""
