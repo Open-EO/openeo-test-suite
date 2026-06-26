@@ -2,7 +2,6 @@ import logging
 import re
 
 import pytest
-from stac_validator import stac_validator
 
 from openeo_test_suite.lib.backend_under_test import get_collection_ids
 from openeo_test_suite.lib.collection_metadata import OpeneoApiCollectionTests

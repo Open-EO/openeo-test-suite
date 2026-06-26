@@ -1,8 +1,6 @@
 import json
-import os
 import urllib
 
-import numpy as np
 import openeo
 import pystac_client
 import pytest

@@ -15,7 +15,7 @@ def test_apply_dimension_ndvi_2(
     b_dim = collection_dims["b_dim"]
 
     def compute_ndvi(data):
-        from openeo.processes import array_concat, array_element
+        from openeo.processes import array_concat
 
         red = data.array_element(label="B04")
         nir = data.array_element(label="B08")

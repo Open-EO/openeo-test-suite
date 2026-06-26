@@ -1,7 +1,7 @@
 import functools
 import logging
 from dataclasses import dataclass
-from typing import Iterable, List, Optional, Union
+from typing import List, Optional, Union
 
 import pytest
 

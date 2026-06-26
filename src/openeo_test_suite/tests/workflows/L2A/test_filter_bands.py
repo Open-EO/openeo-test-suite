@@ -1,5 +1,3 @@
-import numpy as np
-
 from openeo_test_suite.lib.workflows.io import load_netcdf_dataarray
 
 

@@ -1,6 +1,5 @@
 import openeo
 import pytest
-from openeo import DataCube
 
 from openeo_test_suite.lib.skipping import extract_processes_from_process_graph
 

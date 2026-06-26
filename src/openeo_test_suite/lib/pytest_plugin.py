@@ -1,14 +1,11 @@
 import argparse
-import json
 import shlex
 import sys
-from pathlib import Path
 
 import openeo
 import pytest
 import pytest_metadata.plugin
 
-import openeo_test_suite
 from openeo_test_suite.lib.backend_under_test import (
     HttpBackend,
     NoBackend,

@@ -1,5 +1,4 @@
 from openeo_test_suite.lib.workflows.io import load_netcdf_dataarray
-from openeo_test_suite.lib.workflows.parameters import temporal_interval_one_day
 
 
 def test_aggregate_temporal(

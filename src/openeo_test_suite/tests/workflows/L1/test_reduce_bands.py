@@ -13,8 +13,6 @@ def test_ndvi_index(
     b_dim = collection_dims["b_dim"]
 
     def compute_ndvi(data):
-        from openeo.processes import array_element
-
         red = data.array_element(index=0)
         nir = data.array_element(index=1)
         return (nir - red) / (nir + red)

@@ -1,10 +1,9 @@
 import itertools
 import json
 import logging
-import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Iterator, List, Optional, Union
+from typing import Iterable, Iterator, List, Optional, Union
 
 import json5
 
