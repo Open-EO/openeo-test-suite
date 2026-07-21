@@ -37,8 +37,7 @@ version = {attr = "openeo_test_suite.__version__"}
 [project.optional-dependencies]
 dask = [
     "openeo-pg-parser-networkx>=2023.11.0",
-    "openeo-processes-dask[implementations]>=2023.11.6,!=2024.1.1,!=2024.1.2",
-    "joblib>=1.3.2", # extra dependency that is not properly declared in openeo-processes-dask https://github.com/Open-EO/openeo-processes-dask/issues/216
+    "openeo-processes-dask[implementations]>=2024.6",
 ]
 vito = [
     "openeo_driver>=0.81.0.dev",
