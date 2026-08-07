@@ -1,5 +1,8 @@
+import argparse
 import logging
 import os
+from distutils.util import strtobool
+from typing import List
 
 import openeo
 import pytest
@@ -58,3 +61,27 @@ def skipper(connection) -> Skipper:
         connection=connection,
         selected_processes=[p.process_id for p in get_selected_processes()],
     )
+
+
+@pytest.fixture
+def backend_processes_names(connection) -> dict:
+    """
+    Fetch all processes exposed at the backend's /processes endpoint.
+
+    Args:
+        connection: The openeo.Connection fixture
+
+    Returns:
+        Dictionary mapping process names to their metadata
+    """
+    response = connection.list_processes()._data
+
+    # # Normalize to a dict if it's a list
+    # if isinstance(response, list):
+    #     return {p["id"]: p for p in response}
+    # elif isinstance(response, dict):
+    if "processes" in response:
+        processes = response["processes"]
+        return set({p["id"]: p for p in processes}.keys())
+    # return response
+    return {}
