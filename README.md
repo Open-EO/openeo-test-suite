@@ -66,6 +66,13 @@ focussing on a specific API aspect to test or verify
       -U https://openeo.example \
       --html=reports/general.html
     ```
+  - Usage example of testing if the back-end satisfy the required [process profiles](https://openeo.org/documentation/1.0/developers/profiles/processes.html):
+    ```bash
+    pytest src/openeo_test_suite/tests/general \
+      -U https://openeo.example \
+      src/openeo_test_suite/tests/general/test_process_profile_validation.py \
+      --process-levels=L1,L2,L2A,L2B,L3-Clim
+    ```
 - **WP5 Individual process testing** (lead implementation partner: M. Mohr)
   - Main location: [`src/openeo_test_suite/tests/processes/processing`](./src/openeo_test_suite/tests/processes/processing)
   - Provides tests to validate individual openEO processes,
