@@ -1,8 +1,5 @@
-import argparse
 import logging
 import os
-from distutils.util import strtobool
-from typing import List
 
 import openeo
 import pytest
